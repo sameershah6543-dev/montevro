@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* ── Montevro design tokens ──────────────────────────────────────────
+   Warm ivory canvas, near-black ink, cognac + oxblood leather accents.
+   Inspired by heritage shoemaker sites: quiet, generous, photo-led. */
+@theme {
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant), "Times New Roman", serif;
+
+  --color-ivory: #f7f3ec;
+  --color-cream: #efe8dc;
+  --color-sand: #e2d8c7;
+  --color-stone: #8a8178;
+  --color-ink: #1b1714;
+  --color-ink-soft: #3a332d;
+  --color-cognac: #8b5a2b;
+  --color-oxblood: #5e1a1f;
+  --color-line: #ddd4c6;
+  --color-success: #3f6212;
+  --color-danger: #b42318;
+  --color-warning: #b54708;
+
+  --ease-lux: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ivory text-ink font-sans;
+  }
+  ::selection {
+    @apply bg-ink text-ivory;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-cognac);
+    outline-offset: 2px;
+  }
+}
+
+@utility container-x {
+  @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-10;
+}
+@utility eyebrow {
+  @apply text-[11px] font-medium uppercase tracking-[0.28em] text-stone;
+}
+@utility h-display {
+  @apply font-display font-medium leading-[1.05] tracking-tight;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 px-7 py-3.5 text-[12px] font-medium uppercase tracking-[0.2em] transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-ink text-ivory hover:bg-oxblood;
+}
+@utility btn-outline {
+  @apply btn border border-ink text-ink hover:bg-ink hover:text-ivory;
+}
+@utility btn-light {
+  @apply btn bg-ivory text-ink hover:bg-ink hover:text-ivory;
+}
+@utility link-u {
+  @apply underline decoration-1 underline-offset-4 transition-colors hover:text-cognac;
+}
+@utility input {
+  @apply w-full border border-line bg-white/70 px-4 py-3 text-sm outline-none transition placeholder:text-stone/70 focus:border-ink;
+}
+@utility label {
+  @apply mb-1.5 block text-[11px] font-medium uppercase tracking-[0.18em] text-ink-soft;
+}
+@utility card {
+  @apply border border-line bg-white;
+}
+
+/* Admin uses a cooler, denser surface */
+.admin-surface {
+  --color-ivory: #f6f5f2;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}

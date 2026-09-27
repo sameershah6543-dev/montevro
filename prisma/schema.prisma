@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Users & auth ─────────────────────────────
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  phone        String?
+  passwordHash String
+  role         Role           @default(CUSTOMER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  addresses    Address[]
+  orders       Order[]
+  wishlist     WishlistItem[]
+  stockMoves   StockMovement[]
+  expenses     Expense[]
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName   String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  province   String?
+  postalCode String?
+  isDefault  Boolean @default(false)
+}
+
+// ───────────────────────────── Catalog ─────────────────────────────
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  sortOrder   Int       @default(0)
+  products    Product[]
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model Product {
+  id             String         @id @default(cuid())
+  name           String
+  slug           String         @unique
+  tagline        String?
+  description    String
+  details        String[]       @default([])
+  color          String?
+  material       String?
+  categoryId     String
+  category       Category       @relation(fields: [categoryId], references: [id])
+  price          Int // PKR, whole rupees
+  compareAtPrice Int?
+  costPrice      Int            @default(0) // per pair, for profit tracking
+  status         ProductStatus  @default(ACTIVE)
+  featured       Boolean        @default(false)
+  isNew          Boolean        @default(false)
+  tags           String[]       @default([])
+  images         ProductImage[]
+  variants       Variant[]
+  orderItems     OrderItem[]
+  wishlistedBy   WishlistItem[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status, categoryId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  isModel   Boolean @default(false) // lifestyle / on-foot shot
+  sortOrder Int     @default(0)
+}
+
+model Variant {
+  id                String          @id @default(cuid())
+  productId         String
+  product           Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size              String // EU size, e.g. "42"
+  sku               String          @unique
+  stock             Int             @default(0)
+  lowStockThreshold Int             @default(2)
+  orderItems        OrderItem[]
+  movements         StockMovement[]
+
+  @@unique([productId, size])
+}
+
+enum StockMoveType {
+  STOCK_IN
+  STOCK_OUT
+  SALE
+  RETURN
+  CANCEL_RESTOCK
+  ADJUSTMENT
+}
+
+model StockMovement {
+  id         String        @id @default(cuid())
+  variantId  String
+  variant    Variant       @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  type       StockMoveType
+  quantity   Int // signed: +in / -out
+  balance    Int // stock after this movement
+  reason     String?
+  orderId    String?
+  order      Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime      @default(now())
+
+  @@index([variantId, createdAt])
+}
+
+model WishlistItem {
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, productId])
+}
+
+// ───────────────────────────── Orders ─────────────────────────────
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentMethod {
+  COD
+  BANK_TRANSFER
+  CARD // reserved for a future payment gateway
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model Order {
+  id             String               @id @default(cuid())
+  number         String               @unique // e.g. MV-10042
+  userId         String?
+  user           User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName   String
+  email          String?
+  phone          String
+  addressLine1   String
+  addressLine2   String?
+  city           String
+  province       String?
+  postalCode     String?
+  notes          String?
+  subtotal       Int
+  discount       Int                  @default(0)
+  shippingFee    Int                  @default(0)
+  total          Int
+  couponCode     String?
+  status         OrderStatus          @default(PENDING)
+  paymentMethod  PaymentMethod        @default(COD)
+  paymentStatus  PaymentStatus        @default(UNPAID)
+  courier        String?
+  trackingNumber String?
+  items          OrderItem[]
+  history        OrderStatusHistory[]
+  stockMoves     StockMovement[]
+  notifications  NotificationLog[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId   String?
+  variant     Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  productName String
+  size        String
+  image       String?
+  unitPrice   Int
+  unitCost    Int      @default(0)
+  quantity    Int
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType
+  value       Int
+  minSubtotal Int        @default(0)
+  maxUses     Int?
+  usedCount   Int        @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+}
+
+// ───────────────────────────── Finance ─────────────────────────────
+
+model ExpenseCategory {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  color    String?
+  expenses Expense[]
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  categoryId  String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  amount      Int
+  date        DateTime
+  description String
+  vendor      String?
+  receiptUrl  String?
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+
+  @@index([date])
+}
+
+// ───────────────────────────── Integrations ─────────────────────────────
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  channel   String // whatsapp | email
+  recipient String
+  event     String // order.created, order.status_changed, ...
+  message   String
+  status    String // sent | failed | skipped
+  error     String?
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  message   String
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
