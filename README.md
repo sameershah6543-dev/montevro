@@ -62,7 +62,7 @@ Push this folder to a **private** GitHub repository.
 
 ### 5. WhatsApp order alerts
 **Option A: CallMeBot (free, 2-minute setup, recommended to start)**
-1. Save **+34 644 51 95 23** in the phone that has WhatsApp for +92 334 9024848.
+1. Save **+34 644 78 13 70** in the phone that has WhatsApp for +92 334 9024848.
 2. Send it this exact message: `I allow callmebot to send me messages`
 3. You'll receive an API key. In Vercel, set:
    `WHATSAPP_PROVIDER=callmebot`, `WHATSAPP_ADMIN_NUMBER=923349024848`, `CALLMEBOT_API_KEY=<key>`

@@ -52,7 +52,7 @@ export default async function SettingsPage() {
 
         <Card title="Set up WhatsApp alerts (free, 2 minutes)">
           <ol className="list-decimal space-y-2 pl-5 text-sm text-ink-soft">
-            <li>Save <b className="text-ink">+34 644 51 95 23</b> in the phone that uses WhatsApp number <b className="text-ink">{site.whatsappDisplay}</b>.</li>
+            <li>Save <b className="text-ink">+34 644 78 13 70</b> in the phone that uses WhatsApp number <b className="text-ink">{site.whatsappDisplay}</b>.</li>
             <li>Send it this exact WhatsApp message: <code className="bg-cream px-1.5 py-0.5 text-xs">I allow callmebot to send me messages</code></li>
             <li>You&apos;ll get a reply with your personal <b className="text-ink">API key</b>.</li>
             <li>In your hosting dashboard (Vercel → Project → Settings → Environment Variables) set <code className="bg-cream px-1 text-xs">CALLMEBOT_API_KEY</code> to that key and <code className="bg-cream px-1 text-xs">WHATSAPP_ADMIN_NUMBER</code> to <code className="bg-cream px-1 text-xs">923349024848</code>, then redeploy.</li>
