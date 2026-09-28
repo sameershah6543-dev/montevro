@@ -8,3 +8,4 @@ src/generated
 public/uploads
 *.tsbuildinfo
 next-env.d.ts
+.env.neon
